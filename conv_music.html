@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>音楽を聴く場所を選択</title>
+</head>
+
+<body>
+
+<h2>いろんな場所の響きを楽しもう！</h2>
+<div class="mix">
+  <div class="controls">
+    <label>mix level</label>
+    <input type="range" value="100" step="1" min="0" max="100" oninput="changeValue(this.value, 'mix');"></input>
+    <label>音楽を聴く場所を選んでね</label>
+    <select id="impulse" size="1" onchange="loadImpulse(this.value);">
+      <option value="soundfield_s1r1.wav">テニスコート</option>
+    </select>
+  </div>
+</div>
+
+<audio id="player" crossorigin controls>
+  <source src="loop.wav">
+  Your browser does not support the audio tag.
+</audio>
+
+<script>
+
+var context = new AudioContext();
+var audioElement = document.getElementById('player');
+var carrier = context.createMediaElementSource(audioElement);
+var convolver = context.createConvolver();
+var dry = context.createGain();
+var wet = context.createGain();
+
+carrier.connect( convolver );
+
+convolver.connect(wet);
+carrier.connect(dry);
+
+dry.connect( context.destination );
+wet.connect( context.destination );
+
+var mix = function( value ) {
+	dry.gain.value = ( 1.0 - value );
+	wet.gain.value = value;
+}
+
+var loadImpulse = function ( fileName )
+{
+  var url = "https://tb-221025.tech-base.net/mission6/" + fileName;
+  var request = new XMLHttpRequest();
+  request.open( "GET", url, true );
+  request.responseType = "arraybuffer";
+  request.onload = function ()
+  {
+    context.decodeAudioData( request.response, function ( buffer ) {
+      convolver.buffer = buffer;
+    }, function ( e ) { console.log( e ); } );
+  };request.onerror = function ( e )
+  {
+    console.log( e );
+  };
+  request.send();
+};
+
+loadImpulse(document.getElementById('impulse').value);
+mix(1.0);
+
+function changeValue(string,type)
+{
+  var value = parseFloat(string) / 100.0;
+
+  switch(type)
+  {
+    case 'mix':
+		mix(value);
+      break;
+  }
+}
+   </script>
+
+</body>
+</html>
